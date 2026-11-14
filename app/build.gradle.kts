@@ -88,8 +88,6 @@ dependencies {
 
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.ai)
-  implementation(libs.firebase.appcheck.recaptcha)
-  implementation(libs.firebase.appcheck.debug)
   implementation(libs.firebase.firestore)
   implementation(libs.firebase.auth)
 

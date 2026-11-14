@@ -43,39 +43,48 @@ class OfflineSolverEngine {
         val noAccent = stripVietnameseAccents(rawLower)
         if (rawLower.isBlank() && hasImage) return "Nhận diện từ ảnh đề bài"
 
+        if (!hasImage && !containsEquationOrDigits(rawLower) && tryConversationalReply(input) != null) {
+            return "Gia sư AI"
+        }
+
+        val tokens = noAccent.split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }.toSet()
+
         return when {
             listOf(
                 "khtn", "khoa hoc tu nhien", "tu nhien", "ly hoa sinh", "li hoa sinh"
             ).any { noAccent.contains(it) } -> "KHTN"
 
             listOf(
-                "sinh hoc", "sinh 9", "sinh 12", "gen", "adn", "arn", "nhiem sac the", "nst",
-                "di truyen", "menden", "nguyen phan", "giam phan", "te bao", "quang hop",
-                "ho hap", "he sinh thai", "dot bien", "protein", "riboxom", "axit amin",
-                "bo ba ma hoa", "phien ma", "dich ma"
-            ).any { noAccent.contains(it) } -> "Sinh học"
+                "sinh hoc", "sinh 9", "sinh 12", "nhiem sac the", "di truyen", "menden",
+                "nguyen phan", "giam phan", "te bao", "quang hop", "ho hap", "he sinh thai",
+                "dot bien", "protein", "riboxom", "axit amin", "bo ba ma hoa", "phien ma", "dich ma"
+            ).any { noAccent.contains(it) } ||
+                listOf("gen", "adn", "arn", "nst").any { it in tokens } -> "Sinh học"
 
             listOf(
                 "vat li", "vat ly", "dien tro", "hieu dien the", "cuong do dong dien",
                 "dinh luat om", "cong suat", "thau kinh", "quang hoc", "khuc xa",
                 "tu truong", "cam ung dien tu", "van toc", "gia toc", "luc hap dan",
                 "ampe", "von", "dao dong", "song co", "newton", "nhiet luong", "jun",
-                "dong nang", "the nang", "co nang", "con lac", "buoc song", "ohm", "ω"
-            ).any { noAccent.contains(it) || rawLower.contains(it) } -> "Vật lí"
+                "dong nang", "the nang", "co nang", "con lac", "buoc song", "ω"
+            ).any { noAccent.contains(it) || rawLower.contains(it) } ||
+                listOf("ohm").any { it in tokens } -> "Vật lí"
 
             listOf(
                 "hoa hoc", "hoa 8", "hoa 9", "hoa 10", "hoa 11", "hoa 12", "so mol", "tinh mol",
                 "phuong trinh hoa hoc", "axit", "bazo", "bazơ", "muoi", "kim loai", "phi kim",
                 "nong do", "dung dich", "khoi luong mol", "nguyen tu khoi", "hoa tri",
                 "h2so4", "hcl", "naoh", "co2", "caco3", "quy tim", "phenolphtalein",
-                "este", "ancol", "polime", "amin", "cacbohidrat", "g/mol", "mol"
-            ).any { noAccent.contains(it) || rawLower.contains(it) } -> "Hóa học"
+                "este", "ancol", "polime", "amin", "cacbohidrat", "g/mol"
+            ).any { noAccent.contains(it) || rawLower.contains(it) } ||
+                listOf("mol").any { it in tokens } -> "Hóa học"
 
             listOf(
                 "tieng anh", "english", "grammar", "passive", "conditional", "reported speech",
-                "relative clause", "tense", "thi dong tu", "12 thi", "cau bi dong", "cau dieu kien",
+                "relative clause", "thi dong tu", "12 thi", "cau bi dong", "cau dieu kien",
                 "menh de quan he", "cau tuong thuat", "phat am", "pronunciation", "choose the", "rewrite"
-            ).any { noAccent.contains(it) } -> "Tiếng Anh"
+            ).any { noAccent.contains(it) } ||
+                listOf("tense").any { it in tokens } -> "Tiếng Anh"
 
             listOf(
                 "ngu van", "van hoc", "phan tich", "bai tho", "kho tho", "doan tho",
@@ -94,7 +103,7 @@ class OfflineSolverEngine {
                 "dan so", "khoang san", "song ngoi", "dia hinh", "bien dong"
             ).any { noAccent.contains(it) } -> "Địa lí"
 
-            looksLikeMath(noAccent, rawLower) -> "Toán"
+            looksLikeMath(noAccent, rawLower, tokens) -> "Toán"
 
             else -> "Kiến thức tổng hợp"
         }
@@ -131,12 +140,24 @@ class OfflineSolverEngine {
             return OfflineSolveResult.Solved(levelSubject, solution)
         }
 
-        // 5. Fuzzy search across K-12 Knowledge Base (Toán, Lí, Hóa, Sinh, Anh, Văn)
+        // 5. Smart conversational school assistant reply (greetings, identity, stress/Pomodoro, quick study tips)
+        if (!clean.any { it.isDigit() }) {
+            tryConversationalReply(clean, subject)?.let { reply ->
+                return OfflineSolveResult.Solved("Gia sư AI", reply)
+            }
+        }
+
+        // 6. Fuzzy search across K-12 Knowledge Base (Toán, Lí, Hóa, Sinh, Anh, Văn)
         tryFuzzySearchKnowledge(clean, subject)?.let { (matchedSubject, answer) ->
             return OfflineSolveResult.Solved(matchedSubject, answer)
         }
 
-        // 6. Escalate complex/deep open-ended questions to Online AI
+        // 7. Catch any remaining conversational phrases (even if containing numbers like "12 cap")
+        tryConversationalReply(clean, subject)?.let { reply ->
+            return OfflineSolveResult.Solved("Gia sư AI", reply)
+        }
+
+        // 8. Escalate complex/deep open-ended questions to Online AI
         return OfflineSolveResult.NeedsOnline(subject)
     }
 
@@ -147,17 +168,153 @@ class OfflineSolverEngine {
         return OfflineChatResponder.reply(this, history, userMessage)
     }
 
-    private fun looksLikeMath(noAccent: String, rawLower: String): Boolean {
-        val mathKeywords = listOf(
-            "toan", "phuong trinh", "he phuong trinh", "ham so", "parabol", "vi-et", "viet",
+    fun tryConversationalReply(
+        input: String,
+        contextSubject: String = "Kiến thức tổng hợp"
+    ): String? {
+        val clean = input.trim()
+        if (clean.isEmpty()) return null
+        val noAccent = stripVietnameseAccents(clean.lowercase(Locale.ROOT))
+            .replace(Regex("[^a-z0-9\\s]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (noAccent.isEmpty()) return null
+        val tokens = noAccent.split(" ").filter { it.isNotBlank() }
+
+        // 1. Greetings & Identity ("xin chào", "hi", "hello", "bạn là ai", "tên gì", "bạn làm được gì")
+        val isIdentityOrGreeting =
+            listOf("xin chao", "chao ban", "chao anh", "chao chi", "chao gia su", "chao ad").any {
+                noAccent == it || noAccent.startsWith("$it ")
+            } ||
+                (tokens.firstOrNull() in setOf("hi", "hello", "alo", "chao") && tokens.size <= 5) ||
+                listOf(
+                    "ban la ai", "may la ai", "cau la ai", "ai day", "ai vay",
+                    "ten gi", "ten la gi", "ban ten gi", "ten cua ban",
+                    "ban lam duoc gi", "lam duoc gi", "giup duoc gi", "co chuc nang gi"
+                ).any { phrase -> Regex("\\b${Regex.escape(phrase)}\\b").containsMatchIn(noAccent) }
+
+        if (isIdentityOrGreeting) {
+            return "Chào bạn! Mình là **Gia sư AI 12 Cấp** — người bạn đồng hành học tập từ Lớp 1 đến Lớp 12.\n\n" +
+                "Ngay cả khi **ngoại tuyến (không có mạng)**, mình vẫn hỗ trợ bạn rất nhiều việc:\n" +
+                "• **Giải bài tập từng bước:** Toán (số học, căn thức, phương trình bậc 1/bậc 2), Vật lí, Hóa học có tự động đổi đơn vị SI.\n" +
+                "• **Tra cứu nhanh:** Hằng đẳng thức, Vi-ét, công thức Điện học/Cơ học/Mol, Ngữ văn (biện pháp tu từ, dàn ý), Tiếng Anh (12 thì, câu bị động, điều kiện).\n" +
+                "• **Luyện đề thông minh:** Tạo bộ đề trắc nghiệm **30–40 câu** sát từng khối **Lớp 1 → Lớp 12**.\n" +
+                "• **Lập kế hoạch ôn thi & phương pháp Pomodoro:** Giúp bạn học tập trung, giảm áp lực.\n\n" +
+                "Bạn đang muốn ôn môn nào hay có bài tập nào cần mình giải giúp không?"
+        }
+
+        // 2. Emotional stress & study motivation / Pomodoro ("mệt quá", "chán học", "áp lực", "lo lắng thi cử", "cách học hiệu quả")
+        val emotionalTriggers = listOf(
+            "met qua", "qua met", "met moi", "chan hoc", "chan nan", "nan qua", "buon qua",
+            "ap luc", "stress", "lo lang", "thi cu", "so thi", "so truot", "diem kem", "diem thap",
+            "tam su", "cang thang", "khoc", "co don", "bo cuoc", "mat dong luc"
+        )
+        val effectiveMethodTriggers = listOf(
+            "cach hoc hieu qua", "hoc hieu qua", "phuong phap hoc", "bi quyet hoc",
+            "mat tap trung", "pomodoro", "meo ghi nho", "ghi nho nhanh", "cach hoc thuoc"
+        )
+        if (emotionalTriggers.any { noAccent.contains(it) } || noAccent.contains("pomodoro")) {
+            return "Hít một hơi thật sâu nhé, anh/chị **Gia sư AI 12 Cấp** luôn ở đây lắng nghe và đồng hành cùng bạn!\n\n" +
+                "Cảm giác mệt mỏi hay áp lực trước kỳ thi ai cũng từng gặp — điều đó chứng tỏ bạn rất có trách nhiệm với việc học của mình. Hãy thử ngay **phương pháp Pomodoro** để lấy lại nhịp nhẹ nhàng:\n\n" +
+                "• **25 phút tập trung:** Chọn **duy nhất 1 mục tiêu nhỏ** (1 dạng toán hoặc 5 công thức), tắt thông báo để tập trung trọn vẹn.\n" +
+                "• **5 phút nghỉ ngơi:** Đứng dậy vươn vai, uống ngụm nước mát, hít thở sâu (hít 4 giây – giữ 4 giây – thở 6 giây).\n" +
+                "• **Nghỉ dài 15–20 phút** sau mỗi 4 phiên.\n\n" +
+                "Nếu đang bí bài nào, cứ nhắn trực tiếp vào đây — mình cùng gỡ từng bước nhỏ với bạn nhé!"
+        }
+
+        if (effectiveMethodTriggers.any { noAccent.contains(it) }) {
+            val subjectTip = when {
+                contextSubject.startsWith("Tiếng Anh") ->
+                    "\n• **Mẹo Tiếng Anh:** Học từ vựng theo cụm từ và đặt 1 câu gắn với bản thân."
+                contextSubject.startsWith("Toán") || contextSubject.startsWith("Vật lí") || contextSubject.startsWith("Hóa học") ->
+                    "\n• **Mẹo Tự nhiên:** Che lời giải, tự viết lại công thức kèm đơn vị rồi làm ngay 2 ví dụ ngắn."
+                contextSubject.startsWith("Ngữ văn") || contextSubject.startsWith("Lịch sử") || contextSubject.startsWith("Địa lí") ->
+                    "\n• **Mẹo Xã hội:** Tóm tắt theo sơ đồ Từ khóa → Mốc/Sự kiện → Ý nghĩa."
+                else -> ""
+            }
+            return "**4 Bí quyết học hiệu quả & ghi nhớ nhanh (Áp dụng cho cả 12 cấp):**\n\n" +
+                "1. **Pomodoro (25 phút tập trung – 5 phút nghỉ):** Giữ não tỉnh táo, tránh học dồn gây quá tải.\n" +
+                "2. **Active Recall (Chủ động gợi nhớ):** Đọc xong 1 ý, gấp sách lại và tự nhẩm hoặc viết ra giấy những gì còn nhớ.\n" +
+                "3. **Kỹ thuật Feynman:** Giải thích lại kiến thức bằng lời văn đơn giản nhất như đang giảng cho bạn cùng lớp.\n" +
+                "4. **Lặp lại ngắt quãng (1–3–7):** Ôn lại sau 1 ngày, 3 ngày và 7 ngày để nhớ bền đến ngày thi.$subjectTip"
+        }
+
+        // 3. Quick prompt chips standalone support ("Lập kế hoạch ôn thi", "Giải thích dễ hiểu hơn", "Cho ví dụ tương tự")
+        if (listOf("lap ke hoach on thi", "ke hoach on thi", "lich on thi", "thoi gian bieu").any { noAccent.contains(it) }) {
+            val focus = if (contextSubject != "Kiến thức tổng hợp" && contextSubject != "Gia sư AI") {
+                " (ưu tiên môn **$contextSubject**)"
+            } else {
+                ""
+            }
+            return "**Kế hoạch ôn thi khoa học trong 7 ngày**$focus:\n\n" +
+                "• **Ngày 1–2 (Nền tảng):** Hệ thống công thức & khái niệm cốt lõi ra 1 trang tóm tắt.\n" +
+                "• **Ngày 3–4 (Chuyên đề):** Làm 15–20 câu mỗi chuyên đề từ cơ bản đến vận dụng.\n" +
+                "• **Ngày 5 (Tổng ôn 30–40 câu):** Vào tab **Luyện đề** chọn đúng khối lớp để làm đề bấm giờ như thi thật.\n" +
+                "• **Ngày 6 (Sửa lỗi sai):** Xem lại câu hay sai dấu, sai đơn vị hoặc đọc nhầm đề.\n" +
+                "• **Ngày 7 (Giữ sức khỏe):** Ôn lướt mindmap, đi ngủ sớm trước 22h30.\n\n" +
+                "Mỗi tối học **2 phiên Pomodoro (25 phút tập trung – 5 phút nghỉ)** là đủ hiệu quả mà không bị kiệt sức!"
+        }
+
+        if (listOf("giai thich de hieu hon", "de hieu hon", "giai thich lai").any { noAccent.contains(it) }) {
+            return "Mình rất sẵn lòng giảng chậm và dễ hiểu hơn! Bạn có thể nhắn trực tiếp đề bài (ví dụ: `2x + 5 = 15`, `x^2 - 5x + 6 = 0`, `U = 210V, R = 70Ω`, hoặc tên công thức như `hằng đẳng thức`, `định luật Ôm`) — mình sẽ tách từng bước 1 → 2 → 3 thật rõ ràng cho bạn."
+        }
+
+        if (listOf("cho vi du tuong tu", "vi du tuong tu").any { noAccent.contains(it) }) {
+            return "**Ví dụ mẫu giải từng bước để bạn tham khảo:**\n\n" +
+                "• **Toán:** Giải `x² - 7x + 10 = 0`\n" +
+                "  Δ = (-7)² - 4·1·10 = 9 > 0 → `x₁ = (7 + 3)/2 = 5`, `x₂ = (7 - 3)/2 = 2`.\n" +
+                "• **Vật lí:** Mạch có `U = 12V`, `R = 4Ω` → `I = U / R = 12 / 4 = 3 A`.\n\n" +
+                "Bạn hãy gửi bài toán hoặc môn học bạn đang cần luyện, mình sẽ đưa ví dụ sát đúng dạng đó nhé!"
+        }
+
+        // 4. Gratitude / Farewell
+        if (listOf("cam on", "thank", "tam biet", "bye").any { noAccent.contains(it) }) {
+            return "Không có gì đâu nè! Chúc bạn giữ tinh thần thoải mái và học thật tốt. Khi nào cần giải bài hay tâm sự, cứ mở Gia sư AI nhé!"
+        }
+
+        return null
+    }
+
+    fun buildOfflineFallbackSolution(
+        questionText: String,
+        hasImage: Boolean,
+        detectedSubject: String
+    ): String {
+        val clean = questionText.trim()
+        if (clean.isNotEmpty()) {
+            tryConversationalReply(clean, detectedSubject)?.let { return it }
+            when (val localSolved = solve(clean, hasImage = false)) {
+                is OfflineSolveResult.Solved -> return localSolved.answer
+                is OfflineSolveResult.NeedsOnline -> Unit
+            }
+        }
+        return if (hasImage) {
+            "Hiện kết nối AI phân tích ảnh trực tuyến đang tạm gián đoạn.\n\n" +
+                "Bạn có thể **gõ lại nội dung đề bài hoặc phép tính trong ảnh** vào ô phía trên (ví dụ: `2x + 5 = 15`, `x^2 - 5x + 6 = 0`, `U = 210V, R = 70Ω`, `tính số mol m = 5,6g Fe`, `7 hằng đẳng thức`...) để **bộ giải Offline thông minh** giải chi tiết từng bước cho bạn ngay lập tức!"
+        } else {
+            "Hiện kết nối AI trực tuyến đang tạm gián đoạn, nên hệ thống đã chuyển sang **chế độ Gia sư Offline** ($detectedSubject):\n\n" +
+                "• Nếu là bài tính toán / phương trình / Vật lí / Hóa học: hãy ghi rõ biểu thức hoặc số liệu kèm đơn vị (VD: `2x + 5 = 15`, `căn bậc hai của 48`, `m = 400g, v = 2m/s`).\n" +
+                "• Nếu cần ôn lý thuyết nhanh: thử nhập từ khóa như `hằng đẳng thức`, `định lí Vi-ét`, `định luật Ôm`, `12 thì tiếng Anh`, `biện pháp tu từ`.\n" +
+                "• Hoặc mở tab **Luyện đề** để làm bộ đề trắc nghiệm 30–40 câu theo từng khối Lớp 1–12 hoàn toàn ngoại tuyến!"
+        }
+    }
+
+    private fun containsEquationOrDigits(rawLower: String): Boolean {
+        return rawLower.any { it.isDigit() } || rawLower.any { it in charArrayOf('+', '=', '^', '√', '*', '/') }
+    }
+
+    private fun looksLikeMath(noAccent: String, rawLower: String, tokens: Set<String>): Boolean {
+        val mathPhrases = listOf(
+            "toan", "phuong trinh", "he phuong trinh", "ham so", "parabol", "vi-et",
             "can bac hai", "rut gon", "tam giac", "duong tron", "tu giac noi tiep",
-            "tiep tuyen", "sin", "cos", "tan", "bat dang thuc", "tim x", "chung minh",
+            "tiep tuyen", "bat dang thuc", "tim x", "chung minh",
             "dao ham", "tich phan", "nguyen ham", "logarit", "xac suat", "to hop",
             "dien tich", "chu vi", "the tich", "hang dang thuc", "pytago", "py-ta-go",
-            "cong", "tru", "nhan", "chia", "binh phuong", "lap phuong",
-            "x²", "x^2", "√", "sqrt"
+            "binh phuong", "lap phuong", "x²", "x^2", "√", "sqrt"
         )
-        if (mathKeywords.any { noAccent.contains(it) || rawLower.contains(it) }) return true
+        val mathWordTokens = setOf("sin", "cos", "tan", "viet", "cong", "tru", "nhan", "chia")
+        if (mathPhrases.any { noAccent.contains(it) || rawLower.contains(it) }) return true
+        if (mathWordTokens.any { it in tokens }) return true
         val hasDigits = rawLower.any { it.isDigit() }
         val hasOperators = rawLower.any { it in charArrayOf('+', '-', '*', '×', '/', '÷', '^', '=') }
         return hasDigits && hasOperators

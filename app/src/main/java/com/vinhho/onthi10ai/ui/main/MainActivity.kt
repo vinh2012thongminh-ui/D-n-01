@@ -29,7 +29,6 @@ import com.vinhho.onthi10ai.ui.quiz.QuizFragment
 import com.vinhho.onthi10ai.ui.tutor.TutorFragment
 import com.vinhho.onthi10ai.util.ProRenewalNotice
 import com.vinhho.onthi10ai.util.ThemeManager
-import com.vinhho.onthi10ai.util.configureAppCheck
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -41,7 +40,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        configureAppCheck(this, intent)
         enableEdgeToEdge()
         syncSystemBarsAppearance()
 

@@ -19,13 +19,19 @@ internal object OfflineChatResponder {
         val lastAiMsg = recentContext.lastOrNull { !it.isFromUser }?.text.orEmpty()
         val contextSubject = detectContextSubject(solverEngine, recentContext, clean)
 
-        // 1. Follow-up: Simplify / Explain step-by-step ("Giải thích dễ hiểu hơn", "Tại sao bước 2...")
+        // 1. Context-aware follow-up: Simplify / Explain step-by-step when prior conversation exists
         if (isExplainSimplerRequest(noAccent)) {
+            if (lastUserMsg.isBlank() && lastAiMsg.isBlank()) {
+                solverEngine.tryConversationalReply(clean, contextSubject)?.let { return it }
+            }
             return buildSimplerExplanation(solverEngine, lastUserMsg, lastAiMsg, contextSubject, clean)
         }
 
-        // 2. Follow-up: Similar example ("Cho ví dụ tương tự", "Thêm 1 ví dụ nữa")
+        // 2. Context-aware follow-up: Similar example when prior conversation exists
         if (isSimilarExampleRequest(noAccent)) {
+            if (lastUserMsg.isBlank() && lastAiMsg.isBlank() && contextSubject == "Kiến thức tổng hợp") {
+                solverEngine.tryConversationalReply(clean, contextSubject)?.let { return it }
+            }
             return buildSimilarExample(solverEngine, lastUserMsg, lastAiMsg, contextSubject)
         }
 
@@ -34,32 +40,25 @@ internal object OfflineChatResponder {
             return buildStudyPlan(contextSubject)
         }
 
-        // 4. Memory tricks / Pomodoro / study methods ("Mẹo ghi nhớ nhanh", "Pomodoro")
+        // 4. Memory tricks / Pomodoro / study methods ("Mẹo ghi nhớ nhanh", "Pomodoro", "Cách học hiệu quả")
         if (isMemoryOrMethodRequest(noAccent)) {
             return buildMemoryAndPomodoroTips(contextSubject, noAccent)
         }
 
-        // 5. Emotional support, greetings & gratitude (check before fuzzy knowledge search when conversational)
+        // 5. Conversational greetings, identity ("bạn là ai", "tên gì", "bạn làm được gì"), emotional support & gratitude
         if (!clean.any { it.isDigit() }) {
             if (isEmotionalSupportRequest(noAccent)) {
                 return buildEmotionalSupport(noAccent)
             }
-            if (isGreeting(noAccent)) {
-                return "Chào bạn nhé! Mình là anh/chị Gia sư AI luôn sẵn sàng đồng hành cùng bạn từ Lớp 1 đến Lớp 12.\n\n" +
-                    "Ngay cả khi chưa có mạng, bạn vẫn có thể nhắn mình:\n" +
-                    "• Tính biểu thức hoặc giải phương trình (VD: `2x + 5 = 15`, `x^2 - 5x + 6 = 0`)\n" +
-                    "• Tra nhanh công thức Toán, Vật lí, Hóa học, Sinh học, Ngữ văn, Tiếng Anh\n" +
-                    "• Nhờ lập kế hoạch ôn thi, hướng dẫn học Pomodoro hoặc tâm sự giảm áp lực.\n\n" +
-                    "Bạn đang cần mình hỗ trợ phần nào trước nào?"
-            }
-            if (isGratitude(noAccent)) {
-                return "Không có gì đâu nè, học cùng bạn rất vui! Nếu còn chỗ nào lấn cấn hoặc muốn thử thêm bài tương tự, cứ nhắn mình nhé. Chúc bạn học thật tốt!"
-            }
+            solverEngine.tryConversationalReply(clean, contextSubject)?.let { return it }
         }
 
         // 6. Try solving math / physics / chemistry / K-12 knowledge directly offline
         when (val solved = solverEngine.solve(clean, hasImage = false)) {
             is OfflineSolveResult.Solved -> {
+                if (solved.detectedSubject == "Gia sư AI") {
+                    return solved.answer
+                }
                 return "Mình đã kiểm tra nhanh câu hỏi thuộc môn **${solved.detectedSubject}** cho bạn nè:\n\n" +
                     "${solved.answer}\n\n" +
                     "Bạn có muốn mình giải thích kỹ hơn bước nào hoặc lấy thêm 1 ví dụ tương tự để luyện tay không?"
@@ -67,13 +66,18 @@ internal object OfflineChatResponder {
             is OfflineSolveResult.NeedsOnline -> Unit
         }
 
-        // 7. Catch any remaining emotional/greeting cases
+        // 7. Catch any remaining conversational/emotional/greeting cases (even with digits)
         if (isEmotionalSupportRequest(noAccent)) {
             return buildEmotionalSupport(noAccent)
         }
+        solverEngine.tryConversationalReply(clean, contextSubject)?.let { return it }
 
         // 8. Friendly offline guidance when open-ended discussion requires online Gemini
-        val subjectHint = if (contextSubject != "Kiến thức tổng hợp") " (môn $contextSubject)" else ""
+        val subjectHint = if (contextSubject != "Kiến thức tổng hợp" && contextSubject != "Gia sư AI") {
+            " (môn $contextSubject)"
+        } else {
+            ""
+        }
         return "Câu hỏi này khá mở$subjectHint nên để phân tích sâu và tự nhiên nhất, bạn hãy bật kết nối Internet để mình trao đổi bằng AI trực tuyến nhé!\n\n" +
             "Trong lúc ngoại tuyến, bạn vẫn có thể:\n" +
             "• Nhập trực tiếp phép tính, phương trình hoặc công thức để mình giải ngay\n" +
@@ -86,10 +90,14 @@ internal object OfflineChatResponder {
         currentMessage: String
     ): String {
         val currentDetected = solverEngine.detectSubject(currentMessage, hasImage = false)
-        if (currentDetected != "Kiến thức tổng hợp") return currentDetected
+        if (currentDetected != "Kiến thức tổng hợp" && currentDetected != "Gia sư AI") {
+            return currentDetected
+        }
         for (msg in recentContext.asReversed()) {
             val detected = solverEngine.detectSubject(msg.text, hasImage = false)
-            if (detected != "Kiến thức tổng hợp") return detected
+            if (detected != "Kiến thức tổng hợp" && detected != "Gia sư AI") {
+                return detected
+            }
         }
         return "Kiến thức tổng hợp"
     }
@@ -122,28 +130,17 @@ internal object OfflineChatResponder {
     private fun isMemoryOrMethodRequest(noAccent: String): Boolean {
         val triggers = listOf(
             "meo ghi nho", "ghi nho nhanh", "pomodoro", "cach hoc thuoc", "hoc thuoc",
-            "bi quyet hoc", "mat tap trung", "cach hoc hieu qua", "active recall", "meo lam bai"
+            "bi quyet hoc", "mat tap trung", "cach hoc hieu qua", "hoc hieu qua", "active recall", "meo lam bai"
         )
         return triggers.any { noAccent.contains(it) }
     }
 
     private fun isEmotionalSupportRequest(noAccent: String): Boolean {
         val triggers = listOf(
-            "ap luc", "stress", "met moi", "qua met", "chan nan", "nan qua", "buon qua",
-            "lo lang", "so thi", "so truot", "diem kem", "diem thap", "tam su", "cang thang",
-            "khoc", "co don", "khong lam duoc", "bo cuoc"
+            "ap luc", "stress", "met moi", "met qua", "qua met", "chan hoc", "chan nan",
+            "nan qua", "buon qua", "lo lang", "thi cu", "so thi", "so truot", "diem kem",
+            "diem thap", "tam su", "cang thang", "khoc", "co don", "khong lam duoc", "bo cuoc"
         )
-        return triggers.any { noAccent.contains(it) }
-    }
-
-    private fun isGreeting(noAccent: String): Boolean {
-        val trimmed = noAccent.trim()
-        val greetings = listOf("xin chao", "chao ban", "chao anh", "chao chi", "chao gia su", "hello", "hi", "alo")
-        return greetings.any { trimmed == it || trimmed.startsWith("$it ") }
-    }
-
-    private fun isGratitude(noAccent: String): Boolean {
-        val triggers = listOf("cam on", "thank", "cam on nhieu", "ok cam on", "tam biet", "bye")
         return triggers.any { noAccent.contains(it) }
     }
 
@@ -296,10 +293,10 @@ internal object OfflineChatResponder {
         } else {
             "Bạn không hề đi một mình đâu — cứ đi từng bước nhỏ mỗi ngày, chắc chắn bạn sẽ tiến bộ."
         }
-        return "Hít một hơi thật sâu nhé, anh/chị ở đây lắng nghe bạn nè!\n\n" +
+        return "Hít một hơi thật sâu nhé, anh/chị **Gia sư AI 12 Cấp** luôn ở đây lắng nghe và đồng hành cùng bạn!\n\n" +
             "Cảm giác mệt mỏi hay áp lực trước kỳ thi là điều học sinh nào cũng từng trải qua — điều đó chứng tỏ bạn rất quan tâm tới kết quả của mình. Ngay lúc này, bạn thử làm 3 việc nhỏ sau cùng mình:\n\n" +
             "1. **Tạm dừng 3 phút:** Đặt bút xuống, uống một ngụm nước mát và hít sâu 4 giây – giữ 4 giây – thở ra chậm 6 giây.\n" +
-            "2. **Thu nhỏ mục tiêu:** Đừng nghĩ đến cả núi bài vở. Chỉ chọn **1 bài tập nhỏ nhất** hoặc **15 phút ôn 1 phần dễ nhất** để lấy lại cảm giác chiến thắng.\n" +
+            "2. **Áp dụng Pomodoro (25 phút tập trung – 5 phút nghỉ):** Đừng nghĩ đến cả núi bài vở. Chỉ chọn **1 bài tập nhỏ nhất** làm trong 25 phút rồi nghỉ 5 phút cho não thư giãn.\n" +
             "3. **Chia sẻ bài khó:** Có câu nào đang làm bạn bí, cứ gõ vào đây — mình cùng gỡ từng bước với bạn.\n\n" +
             closing
     }

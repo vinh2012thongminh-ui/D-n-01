@@ -590,5 +590,77 @@ class ExampleRobolectricTest {
         assertFalse(themeManager.isDarkMode())
         assertEquals(com.vinhho.onthi10ai.util.ThemeManager.MODE_LIGHT, themeManager.themeMode.value)
     }
+
+    @Test
+    fun `offline solver handles conversational prompts without misclassifying ai as Biology and supports fallback`() =
+        runBlocking {
+            val app = ApplicationProvider.getApplicationContext<OnThiApplication>()
+            val engine = OfflineSolverEngine()
+
+            // "ai" in "bạn là ai" must NEVER be classified as Sinh học
+            assertFalse(engine.detectSubject("bạn là ai", hasImage = false).contains("Sinh"))
+            assertEquals("Gia sư AI", engine.detectSubject("bạn là ai", hasImage = false))
+
+            val identityPrompts = listOf("xin chào", "hi", "hello", "bạn là ai", "tên gì", "bạn làm được gì")
+            identityPrompts.forEach { prompt ->
+                val reply = engine.tryConversationalReply(prompt)
+                assertTrue("Expected non-null intro reply for '$prompt'", !reply.isNullOrBlank())
+                assertTrue("Expected Gia sư AI 12 Cấp intro for '$prompt'", reply!!.contains("Gia sư AI 12 Cấp"))
+                assertTrue("Expected quiz 30–40 mention for '$prompt'", reply.contains("30–40"))
+            }
+
+            val stressPrompts = listOf("mệt quá", "chán học", "áp lực", "lo lắng thi cử", "cách học hiệu quả")
+            stressPrompts.forEach { prompt ->
+                val reply = engine.tryConversationalReply(prompt)
+                assertTrue("Expected non-null guidance reply for '$prompt'", !reply.isNullOrBlank())
+                assertTrue("Expected Pomodoro guidance for '$prompt'", reply!!.contains("Pomodoro"))
+            }
+
+            val quickChips = listOf(
+                "Lập kế hoạch ôn thi",
+                "Mẹo ghi nhớ nhanh",
+                "Giải thích dễ hiểu hơn",
+                "Cho ví dụ tương tự"
+            )
+            quickChips.forEach { chip ->
+                val reply = engine.tryConversationalReply(chip)
+                assertTrue("Expected non-null quick chip reply for '$chip'", !reply.isNullOrBlank())
+            }
+
+            val repo = HybridAiRepository(app)
+            val whoAreYou = repo.solveExamQuestion("bạn là ai", null).getOrThrow()
+            assertTrue(whoAreYou.isOfflineSolved)
+            assertEquals("Gia sư AI", whoAreYou.detectedSubject)
+            assertTrue(whoAreYou.answer.contains("Gia sư AI 12 Cấp"))
+        }
+
+    @Test
+    fun `clicking Google Sign-In opens fallback dialog when Play Services or CredentialManager unavailable`() =
+        runBlocking {
+            val app = ApplicationProvider.getApplicationContext<OnThiApplication>()
+            app.authRepository.signOut()
+
+            val controller = Robolectric.buildActivity(LoginActivity::class.java).setup()
+            val activity = controller.get()
+
+            val btnGoogle = activity.findViewById<android.view.View>(R.id.btnGoogleSignIn)
+            btnGoogle.performClick()
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+
+            val dialog = org.robolectric.shadows.ShadowAlertDialog.getLatestDialog() as? androidx.appcompat.app.AlertDialog
+            assertTrue("Expected Google fallback AlertDialog to be displayed", dialog != null && dialog.isShowing)
+
+            val etName = dialog!!.findViewById<android.widget.EditText>(R.id.etGoogleName)
+            val etEmail = dialog.findViewById<android.widget.EditText>(R.id.etGoogleEmail)
+            etName?.setText("Trần Bảo Ngọc")
+            etEmail?.setText("baongoc@gmail.com")
+
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+
+            assertTrue(app.authRepository.isRealUserLoggedIn())
+            assertEquals("baongoc@gmail.com", app.authRepository.getCurrentUser()?.email)
+        }
 }
+
 

@@ -151,14 +151,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         if (webClientId.isEmpty() || !hasPlayServices) {
-            showGoogleAccountPickerDialog()
+            showGoogleFallbackDialog()
             return
         }
 
+        setLoading(true)
         lifecycleScope.launch {
             val credentialManager = CredentialManager.create(this@LoginActivity)
             try {
-                // First attempt GetGoogleIdOption (separate single-option request per API 36 guidance)
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(webClientId)
@@ -167,20 +167,27 @@ class LoginActivity : AppCompatActivity() {
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
                     .build()
-                val result = credentialManager.getCredential(this@LoginActivity, request)
-                handleGoogleCredentialResult(result.credential)
+                val result = kotlinx.coroutines.withTimeoutOrNull(25_000L) {
+                    credentialManager.getCredential(this@LoginActivity, request)
+                }
+                if (result == null) {
+                    Log.w(TAG, "CredentialManager timed out, opening Google fallback dialog")
+                    showGoogleFallbackDialog()
+                } else {
+                    handleGoogleCredentialResult(result.credential)
+                }
             } catch (e: NoCredentialException) {
                 Log.w(TAG, "No authorized Google credentials found, trying interactive Sign-In with Google", e)
                 tryInteractiveSignInWithGoogle(credentialManager, webClientId)
             } catch (e: GetCredentialCancellationException) {
-                Log.w(TAG, "Google Sign-In cancelled or dismissed: ${e.message}", e)
-                setLoading(false)
+                Log.w(TAG, "Google Sign-In cancelled or blocked (e.g. SHA-1 mismatch), opening fallback dialog: ${e.message}")
+                showGoogleFallbackDialog()
             } catch (e: GetCredentialException) {
-                Log.w(TAG, "CredentialManager unavailable on this device/preview, opening fallback picker", e)
-                showGoogleAccountPickerDialog()
+                Log.w(TAG, "CredentialManager unavailable/mismatched SHA-1, opening Google fallback dialog", e)
+                showGoogleFallbackDialog()
             } catch (e: Exception) {
-                Log.e(TAG, "Unexpected error during Google Sign-In", e)
-                showGoogleAccountPickerDialog()
+                Log.e(TAG, "Unexpected error during Google Sign-In, opening fallback dialog", e)
+                showGoogleFallbackDialog()
             }
         }
     }
@@ -194,17 +201,23 @@ class LoginActivity : AppCompatActivity() {
             val interactiveRequest = GetCredentialRequest.Builder()
                 .addCredentialOption(signInOption)
                 .build()
-            val result = credentialManager.getCredential(this@LoginActivity, interactiveRequest)
-            handleGoogleCredentialResult(result.credential)
+            val result = kotlinx.coroutines.withTimeoutOrNull(25_000L) {
+                credentialManager.getCredential(this@LoginActivity, interactiveRequest)
+            }
+            if (result == null) {
+                showGoogleFallbackDialog()
+            } else {
+                handleGoogleCredentialResult(result.credential)
+            }
         } catch (e: GetCredentialCancellationException) {
-            Log.w(TAG, "Interactive Google Sign-In cancelled or dismissed: ${e.message}", e)
-            setLoading(false)
+            Log.w(TAG, "Interactive Google Sign-In cancelled/rejected, opening fallback dialog: ${e.message}")
+            showGoogleFallbackDialog()
         } catch (e: GetCredentialException) {
-            Log.w(TAG, "Interactive CredentialManager unavailable, opening fallback picker", e)
-            showGoogleAccountPickerDialog()
+            Log.w(TAG, "Interactive CredentialManager failed (SHA-1 mismatch on debug APK), opening fallback dialog", e)
+            showGoogleFallbackDialog()
         } catch (e: Exception) {
-            Log.e(TAG, "Interactive Google Sign-In error", e)
-            showGoogleAccountPickerDialog()
+            Log.e(TAG, "Interactive Google Sign-In error, opening fallback dialog", e)
+            showGoogleFallbackDialog()
         }
     }
 
@@ -218,11 +231,13 @@ class LoginActivity : AppCompatActivity() {
                 ?: email.substringBefore("@")
             viewModel.signInWithGoogleIdToken(googleCred.idToken, name, email)
         } else {
-            showGoogleAccountPickerDialog()
+            showGoogleFallbackDialog()
         }
     }
 
-    private fun showGoogleAccountPickerDialog() {
+    private fun showGoogleFallbackDialog() {
+        setLoading(false)
+        if (isFinishing || isDestroyed) return
         val dialogBinding = DialogGoogleSigninBinding.inflate(layoutInflater)
         val lastAccount = viewModel.getLastGoogleAccount()
         if (lastAccount != null) {

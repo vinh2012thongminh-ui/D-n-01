@@ -179,9 +179,7 @@ class HybridAiRepository(
 
             val rawText = response.text?.trim().orEmpty()
             if (rawText.isEmpty()) {
-                return Result.failure(
-                    IllegalStateException("AI chưa trả về nội dung lời giải. Vui lòng thử lại.")
-                )
+                return buildGracefulOfflineFallback(questionText, imageBitmap != null, fallbackSubject)
             }
 
             val lines = rawText.lines()
@@ -206,20 +204,41 @@ class HybridAiRepository(
                 )
             )
         } catch (e: TimeoutCancellationException) {
-            Log.e(TAG, "Firebase AI tutor generation timed out", e)
-            Result.failure(
-                IllegalStateException("Yêu cầu giải bài quá thời gian chờ (60 giây). Vui lòng thử lại.")
-            )
+            Log.w(TAG, "Firebase AI tutor generation timed out, falling back to OfflineSolverEngine", e)
+            buildGracefulOfflineFallback(questionText, imageBitmap != null, fallbackSubject)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Firebase AI tutor generation failed", e)
-            Result.failure(
-                IllegalStateException(
-                    e.localizedMessage ?: "Không thể kết nối AI trực tuyến. Vui lòng thử lại sau."
-                )
-            )
+            Log.w(TAG, "Firebase AI tutor generation failed, falling back to OfflineSolverEngine", e)
+            buildGracefulOfflineFallback(questionText, imageBitmap != null, fallbackSubject)
         }
+    }
+
+    private fun buildGracefulOfflineFallback(
+        questionText: String,
+        hasImage: Boolean,
+        fallbackSubject: String
+    ): Result<TutorSolution> {
+        val offlineAnswer = solverEngine.buildOfflineFallbackSolution(
+            questionText = questionText,
+            hasImage = hasImage,
+            detectedSubject = fallbackSubject
+        )
+        val resolvedSubject = if (questionText.isNotBlank() &&
+            solverEngine.tryConversationalReply(questionText, fallbackSubject) != null
+        ) {
+            "Gia sư AI"
+        } else {
+            fallbackSubject
+        }
+        return Result.success(
+            TutorSolution(
+                detectedSubject = resolvedSubject,
+                answer = offlineAnswer,
+                isOfflineSolved = true,
+                needsOnlineAnalysis = false
+            )
+        )
     }
 
     override suspend fun generatePracticeQuiz(
