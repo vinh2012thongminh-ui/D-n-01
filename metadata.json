@@ -1,0 +1,6 @@
+{
+  "name": "Gia Sư AI - Học Tập 12 Cấp",
+  "description": "Hệ thống trợ lý học tập AI đa cấp học (Tiểu học, THCS, THPT) với bộ giải Hybrid Offline/Online, luyện đề ngẫu nhiên 30-40 câu và gói học tập PRO.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

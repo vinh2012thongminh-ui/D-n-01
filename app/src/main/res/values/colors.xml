@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_blue">#1565C0</color>
+    <color name="primary_blue_dark">#0D47A1</color>
+    <color name="primary_blue_container">#E8F1FD</color>
+    <color name="on_primary_blue_container">#0A306E</color>
+    <color name="chat_user_bubble">#1565C0</color>
+
+    <color name="secondary_teal">#0D9488</color>
+    <color name="secondary_container">#CCFBF1</color>
+    <color name="on_secondary_container">#134E4A</color>
+
+    <color name="pro_gold">#D97706</color>
+    <color name="pro_button_bg">#D97706</color>
+    <color name="pro_gold_bg">#FEF3C7</color>
+    <color name="pro_gold_border">#F59E0B</color>
+
+    <color name="surface_bg">#F4F7FB</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_variant">#EBF2FA</color>
+    <color name="outline_subtle">#DCE4F0</color>
+
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_on_primary">#FFFFFF</color>
+
+    <color name="quiz_correct">#15803D</color>
+    <color name="quiz_correct_bg">#DCFCE7</color>
+    <color name="quiz_wrong">#C62828</color>
+    <color name="quiz_wrong_bg">#FEE2E2</color>
+
+    <color name="danger_red">#DC2626</color>
+    <color name="danger_red_bg">#FEE2E2</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

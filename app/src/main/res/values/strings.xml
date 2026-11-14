@@ -1,0 +1,161 @@
+<resources>
+    <string name="app_name">Gia Sư AI - Học Tập 12 Cấp</string>
+    <string name="login_subtitle">Trợ lý học tập Tiểu học - THCS - THPT</string>
+    <string name="login_tagline">Giải bài thông minh cả khi ngoại tuyến, luyện đề 30–40 câu chuẩn cấu trúc từ lớp 1 đến lớp 12</string>
+
+    <string name="btn_enter_now">Vào học ngay (Trải nghiệm nhanh)</string>
+    <string name="btn_google_signin">Đăng nhập với Google</string>
+    <string name="btn_quick_guest">Trải nghiệm nhanh (Không cần tài khoản)</string>
+    <string name="email_section_title">Đăng nhập hoặc tạo tài khoản Email</string>
+    <string name="hint_email">Email học sinh</string>
+    <string name="hint_password">Mật khẩu (tối thiểu 6 ký tự)</string>
+    <string name="btn_login">Đăng nhập</string>
+    <string name="btn_register">Tạo tài khoản mới</string>
+    <string name="or_divider">hoặc bằng Email &amp; Mật khẩu</string>
+    <string name="or_guest_divider">hoặc</string>
+    <string name="google_dialog_title">Đăng nhập với Google</string>
+    <string name="google_dialog_subtitle">Thiết bị hiện chưa khả dụng Google Play Services. Bạn có thể nhập nhanh tài khoản Gmail để kiểm thử hoặc dùng chế độ Khách dự phòng.</string>
+    <string name="google_hint_name">Họ và tên (VD: Nguyễn Minh Anh)</string>
+    <string name="google_hint_email">Email Google (VD: tenban@gmail.com)</string>
+    <string name="google_dialog_confirm">Tiếp tục với Google</string>
+    <string name="google_dialog_guest_fallback">Chế độ Khách</string>
+    <string name="google_dialog_cancel">Hủy</string>
+    <string name="error_empty_google_name">Vui lòng nhập họ và tên tài khoản Google.</string>
+    <string name="error_invalid_google_email">Vui lòng nhập đúng địa chỉ Email Google (ví dụ: tenban@gmail.com).</string>
+    <string name="welcome_guest_smooth">Đã vào chế độ Trải nghiệm nhanh (Khách).</string>
+    <string name="welcome_google_success">Đăng nhập Google thành công: %1$s</string>
+
+    <string name="tab_tutor">Gia sư AI</string>
+    <string name="tab_chat">Trò chuyện</string>
+    <string name="tab_quiz">Luyện đề</string>
+    <string name="tab_history">Hồ sơ</string>
+
+    <string name="chat_header_title">Trò chuyện với Gia sư AI</string>
+    <string name="chat_header_subtitle">Hỏi đáp liên tục, đào sâu kiến thức 12 cấp hoặc tâm sự giải tỏa áp lực thi cử</string>
+    <string name="chat_btn_clear">Xóa đoạn chat</string>
+    <string name="chat_cleared_notice">Đã bắt đầu cuộc trò chuyện mới!</string>
+    <string name="chat_input_hint">Nhắn câu hỏi, bài tập hoặc điều bạn đang băn khoăn...</string>
+    <string name="chat_send_desc">Gửi tin nhắn</string>
+    <string name="chat_ai_sender">Gia sư AI</string>
+    <string name="chat_ai_typing">Gia sư AI đang suy nghĩ...</string>
+    <string name="chat_copied">Đã sao chép nội dung tin nhắn!</string>
+    <string name="chat_welcome_message">Chào bạn! Mình là Gia sư AI đồng hành cùng bạn từ Lớp 1 đến Lớp 12.\n\nBạn có thể hỏi tiếp về bài tập đang giải, nhờ mình lấy thêm ví dụ, lập kế hoạch ôn thi, hoặc tâm sự mỗi khi thấy áp lực nhé. Hôm nay bạn muốn trao đổi về chủ đề gì nào?</string>
+    <string name="chat_quick_simpler">Giải thích dễ hiểu hơn</string>
+    <string name="chat_quick_example">Cho ví dụ tương tự</string>
+    <string name="chat_quick_plan">Lập kế hoạch ôn thi</string>
+    <string name="chat_quick_memory">Mẹo ghi nhớ nhanh</string>
+
+    <string name="account_guest_label">Tài khoản Khách (Trải nghiệm nhanh)</string>
+    <string name="account_local_prefix">Học sinh: %1$s</string>
+    <string name="account_google_prefix">Google: %1$s (%2$s)</string>
+
+    <string name="tutor_header_title">Gia sư AI 12 Cấp (Hybrid)</string>
+    <string name="tutor_header_desc">Tính toán, giải phương trình và tra cứu công thức Cấp 1–2–3 tức thì ngay cả khi không có mạng; kết hợp AI phân tích chuyên sâu.</string>
+    <string name="tutor_question_hint">Nhập phép tính, phương trình, câu hỏi lý thuyết hoặc bài tập (VD: 2x + 5 = 15, x² - 5x + 6 = 0, Con người có mấy gen?)...</string>
+    <string name="tutor_detected_subject_format">Môn nhận diện: %1$s</string>
+    <string name="tutor_mode_offline">Giải nhanh trên máy</string>
+    <string name="tutor_mode_online_hint">Cần kết nối nâng cao</string>
+    <string name="btn_take_photo">Chụp ảnh đề bài</string>
+    <string name="btn_pick_gallery">Chọn ảnh từ thư viện</string>
+    <string name="btn_remove_image">Xóa ảnh đã chọn</string>
+    <string name="btn_solve_ai">Giải bài ngay</string>
+    <string name="tutor_solving">Đang phân tích và giải bài...</string>
+    <string name="tutor_solution_title">Lời giải</string>
+    <string name="btn_copy_solution">Sao chép</string>
+    <string name="solution_copied">Đã sao chép lời giải vào bộ nhớ tạm!</string>
+    <string name="solution_saved_notice">Đã lưu vào Lịch sử học tập.</string>
+    <string name="ai_needs_internet_friendly">Câu hỏi này cần phân tích chuyên sâu. Vui lòng kết nối mạng Internet để AI giải chi tiết cho bạn nhé!</string>
+
+    <string name="quiz_header_title">Luyện đề trắc nghiệm Lớp 1 – Lớp 12</string>
+    <string name="quiz_header_desc">Chọn chính xác khối lớp đang học, nhập môn hoặc chủ đề muốn ôn — hệ thống sinh 30–40 câu sát chương trình và bảo mật đáp án đến khi nộp bài.</string>
+    <string name="quiz_grade_label">Chọn khối lớp (Lớp 1 → Lớp 12)</string>
+    <string name="grade_1">Lớp 1</string>
+    <string name="grade_2">Lớp 2</string>
+    <string name="grade_3">Lớp 3</string>
+    <string name="grade_4">Lớp 4</string>
+    <string name="grade_5">Lớp 5</string>
+    <string name="grade_6">Lớp 6</string>
+    <string name="grade_7">Lớp 7</string>
+    <string name="grade_8">Lớp 8</string>
+    <string name="grade_9">Lớp 9 (Ôn thi vào 10)</string>
+    <string name="grade_10">Lớp 10</string>
+    <string name="grade_11">Lớp 11</string>
+    <string name="grade_12">Lớp 12 (Ôn thi THPT)</string>
+    <string name="quiz_topic_hint">Nhập môn học / chủ đề muốn ôn (VD: Toán, KHTN, Tiếng Anh, Ngữ văn, Vật lí, Hóa học...)</string>
+    <string name="quiz_count_format">Số câu hỏi: %1$d câu (Trộn ngẫu nhiên A/B/C/D)</string>
+    <string name="quiz_banner_format">Đề luyện tập • %1$s • Môn %2$s</string>
+    <string name="quiz_banner_sub_format">%1$d câu trắc nghiệm sát chương trình %2$s</string>
+    <string name="btn_generate_quiz">Tạo đề luyện tập</string>
+    <string name="quiz_generating">Đang khởi tạo bộ câu hỏi theo khối lớp...</string>
+    <string name="btn_submit_quiz">Nộp bài</string>
+    <string name="quiz_confirm_title">Xác nhận nộp bài</string>
+    <string name="quiz_confirm_message">Bạn đã trả lời %1$d/%2$d câu. Đáp án và giải thích chi tiết sẽ hiển thị ngay sau khi nộp bài. Bạn có muốn nộp ngay không?</string>
+    <string name="quiz_confirm_positive">Nộp bài ngay</string>
+    <string name="quiz_confirm_negative">Làm tiếp</string>
+    <string name="quiz_score_format">Kết quả (%1$s - %2$s): %3$d/%4$d câu đúng (%5$.1f điểm)</string>
+    <string name="quiz_saved_notice">Đã lưu điểm vào Lịch sử học tập!</string>
+    <string name="quiz_explanation_prefix">Giải thích:</string>
+
+    <string name="history_stats_title">Hồ sơ &amp; Thống kê học tập</string>
+    <string name="history_total_questions">Số bài đã giải</string>
+    <string name="history_avg_score">Điểm TB luyện đề</string>
+    <string name="history_list_title">Lịch sử bài đã giải</string>
+    <string name="history_empty_title">Chưa có bài giải nào</string>
+    <string name="history_empty_desc">Hãy sang tab Gia sư AI để giải bài tập hoặc tab Luyện đề để rèn luyện 30–40 câu trắc nghiệm.</string>
+    <string name="btn_logout">Đăng xuất</string>
+    <string name="dialog_close">Đóng</string>
+    <string name="dialog_question_label">Đề bài:</string>
+    <string name="dialog_answer_label">Lời giải:</string>
+
+    <string name="btn_upgrade_pro">Nâng cấp PRO (-50%)</string>
+    <string name="badge_pro_active">PRO</string>
+    <string name="pro_card_title_free">Tài khoản Miễn phí • Ưu đãi giảm 50% PRO</string>
+    <string name="pro_card_desc_free">Giảm 50% tất cả gói PRO! Nâng cấp để mở khóa giải bằng Camera không giới hạn, bộ đề 40 câu chuyên sâu và tắt hoàn toàn quảng cáo.</string>
+    <string name="pro_welcome_member_title">Chào bạn, thành viên PRO!</string>
+    <string name="pro_toolbar_welcome">Chào bạn thành viên PRO</string>
+    <string name="pro_card_desc_active">Gói hiện tại: %1$s • Toàn bộ tính năng cao cấp đã được mở khóa và tắt hoàn toàn quảng cáo.</string>
+    <string name="btn_manage_pro">Quản lý gói PRO</string>
+
+    <string name="pro_sheet_title">Gói Học Tập PRO - 12 Cấp</string>
+    <string name="pro_sheet_subtitle">Học tập không giới hạn, không quảng cáo làm phiền</string>
+    <string name="pro_discount_banner">ƯU ĐÃI ĐẶC BIỆT: GIẢM 50% TẤT CẢ GÓI PRO</string>
+    <string name="pro_discount_badge">-50%</string>
+    <string name="pro_plan_monthly_title">Gói Tháng</string>
+    <string name="pro_plan_monthly_old">49.000đ</string>
+    <string name="pro_plan_monthly_new">24.500đ</string>
+    <string name="pro_plan_yearly_title">Gói Năm</string>
+    <string name="pro_plan_yearly_old">299.000đ</string>
+    <string name="pro_plan_yearly_new">149.500đ</string>
+    <string name="pro_plan_lifetime_title">Trọn Đời</string>
+    <string name="pro_plan_lifetime_old">599.000đ</string>
+    <string name="pro_plan_lifetime_new">299.500đ</string>
+    <string name="btn_activate_pro">Nâng cấp PRO (Giảm 50%)</string>
+    <string name="btn_cancel_pro">Chuyển về bản Miễn phí</string>
+    <string name="pro_contest_dialog_title">Thông báo mở khóa PRO (Bài dự thi)</string>
+    <string name="pro_contest_dialog_message">Vì đây là bài dự thi nên hệ thống sẽ mở toàn bộ tính năng PRO (%1$s) hoàn toàn miễn phí — tắt sạch quảng cáo và mở khóa đầy đủ các tính năng cao cấp để phục vụ trải nghiệm và chấm thi.\n\nXác nhận mở khóa toàn bộ tính năng PRO ngay?</string>
+    <string name="pro_contest_dialog_confirm">Mở toàn bộ PRO</string>
+    <string name="pro_activated_toast">Chào bạn thành viên PRO! Toàn bộ tính năng cao cấp đã được mở khóa.</string>
+    <string name="pro_deactivated_toast">Đã chuyển về bản Miễn phí.</string>
+    <string name="pro_expiry_permanent">Hiệu lực: Vĩnh viễn trọn đời (đã lưu cố định trên máy)</string>
+    <string name="pro_expiry_date_format">Hết hạn ngày: %1$s (còn %2$d ngày)</string>
+    <string name="pro_renewal_dialog_title">Thông báo gia hạn gói PRO</string>
+    <string name="pro_renewal_dialog_message">Gói %1$s của bạn đã hết hạn vào ngày %2$s.\n\nHãy gia hạn ngay với ưu đãi giảm 50% để tiếp tục tắt quảng cáo và mở khóa toàn bộ tính năng cao cấp nhé!</string>
+    <string name="pro_renewal_action_now">Gia hạn ngay</string>
+    <string name="pro_renewal_action_later">Để sau</string>
+
+    <string name="theme_section_title">Giao diện hiển thị</string>
+    <string name="theme_section_desc">Chọn nền Sáng dịu mắt hoặc nền Tối hiện đại (lưu tự động trên máy)</string>
+    <string name="theme_light_label">Nền Sáng</string>
+    <string name="theme_dark_label">Nền Tối</string>
+    <string name="theme_toggle_desc">Chuyển đổi nền Sáng / Tối</string>
+
+    <string name="ad_badge_label">QC</string>
+    <string name="ad_mini_text">Bộ sách Tổng ôn 12 Cấp — Giảm 30% cho học sinh</string>
+    <string name="ad_close_desc">Thu gọn quảng cáo</string>
+
+    <string name="error_empty_question">Bạn hãy nhập câu hỏi, phép tính hoặc chọn ảnh đề bài trước nhé!</string>
+    <string name="error_empty_topic">Bạn hãy nhập môn học hoặc chủ đề muốn ôn (ví dụ: Toán - Phương trình bậc 2) nhé!</string>
+    <string name="error_invalid_email">Email chưa đúng định dạng. Vui lòng kiểm tra lại.</string>
+    <string name="error_short_password">Mật khẩu cần có ít nhất 6 ký tự.</string>
+    <string name="error_camera_permission">Ứng dụng cần quyền Camera để chụp ảnh đề bài. Bạn có thể chọn ảnh từ thư viện thay thế.</string>
+</resources>
