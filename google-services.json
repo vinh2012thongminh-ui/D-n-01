@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "748585705351",
+    "project_id": "duthi-giaitudonghoa",
+    "storage_bucket": "duthi-giaitudonghoa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748585705351:android:9403602f16f9caa0777d22",
+        "android_client_info": {
+          "package_name": "com.vinhho.onthi10ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0rwIzCpA73DzXxnqYB3eV19Xv5GkvWfw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
